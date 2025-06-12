@@ -11,7 +11,7 @@ import {
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import jsPDF from "jspdf";
-import { logoutUser } from "@/services/authService";
+import { doLogout } from "@/services/authService";
 
 export const DashboardHeader = () => {
   const handleExportData = () => {
@@ -285,7 +285,7 @@ export const DashboardHeader = () => {
               </Link>
               <button
                 className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                onClick={logoutUser}
+                onClick={doLogout}
               >
                 <LogOut className="w-5 h-5" />
               </button>

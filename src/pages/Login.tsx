@@ -12,47 +12,42 @@ import { toast } from "@/components/ui/use-toast";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/context/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { doLogin } from "@/services/authService";
 
-export const Login: React.FC = () => {
-  const [credentials, setCredentials] = useState({
-    username: "",
-    password: "",
-  });
-  const [isLoading, setIsLoading] = useState(false);
+const Login = () => {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const { login } = useAuth();
-  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg("");
     setIsLoading(true);
 
     try {
-      await login(credentials);
-      toast({
-        title: "Success",
-        description: "Logged in successfully!",
-      });
+      const response = await doLogin({ username, password });
+      const { access_token, refresh_token } = response.data.data.jwtTokens;
+      localStorage.setItem("accessToken", access_token);
+      localStorage.setItem("refreshToken", refresh_token);
+
+      const userProfile = response.data.profile;
+      localStorage.setItem("userProfile", JSON.stringify(userProfile));
       navigate("/dashboard");
-    } catch (error) {
+    } catch (err: any) {
+      console.error(err);
+      // setErrorMsg('');
+      // toast.error('Login failed. Please check your credentials.')
       toast({
-        title: "Error",
+        title: "Login failed",
         description: "Login failed. Please check your credentials.",
-        variant: "destructive",
+        variant: "destructive", // or "destructive"
       });
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCredentials((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
   };
 
   return (
@@ -116,16 +111,21 @@ export const Login: React.FC = () => {
             </p>
           </div>
 
+          {/* {errorMsg && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4 text-sm">
+              {errorMsg}
+            </div>
+          )} */}
+
           <form className="space-y-4 sm:space-y-6" onSubmit={handleLogin}>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
-                name="username"
                 placeholder="Enter your email"
-                value={credentials.username}
-                onChange={handleChange}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 required
               />
             </div>
@@ -136,10 +136,9 @@ export const Login: React.FC = () => {
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  name="password"
                   placeholder="Enter your password"
-                  value={credentials.password}
-                  onChange={handleChange}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="pr-10"
                   required
                 />
@@ -194,3 +193,5 @@ export const Login: React.FC = () => {
     </div>
   );
 };
+
+export default Login;

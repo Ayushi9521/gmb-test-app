@@ -1,6 +1,4 @@
-import React, { useState, useEffect } from "react";
-import { useAuth } from "@/context/AuthContext";
-import { useAxiosAuth } from "@/hooks/useAxiosAuth";
+import React, { useState } from "react";
 import { SummaryStats } from "@/components/dashboard/SummaryStats";
 import { KPIToggle } from "@/components/dashboard/KPIToggle";
 import { FilterBar } from "@/components/dashboard/FilterBar";
@@ -8,12 +6,9 @@ import { ListingGrid } from "@/components/dashboard/ListingGrid";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 
 const Index = () => {
-  const { user } = useAuth();
-
-  // This hook connects the auth context with axios interceptors
-  useAxiosAuth();
   const [activeKPI, setActiveKPI] = useState("insights");
   const [searchTerm, setSearchTerm] = useState("");
+
   const [selectedFilters, setSelectedFilters] = useState({
     healthScore: "all",
     category: "all",
