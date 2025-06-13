@@ -133,5 +133,6 @@ export const getListingLocation = async () => {
 
 export const getListingsStats = async () => {
   const res = await axiosInstance.get("/v1/get-trend");
+  // console.log("response from location service for getlisting", res);
   return res;
 };

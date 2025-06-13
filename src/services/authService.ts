@@ -15,7 +15,7 @@ export const refreshAccessToken = async () => {
     //     },
     //   }
     // );
-    const response = await axiosInstance.post("/auth/refresh");
+    const response = await axiosInstance.post("/v1/refresh-access-token");
     // if (!response.ok) {
     //   throw new Error("Refresh failed");
     // }

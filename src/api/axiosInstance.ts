@@ -2,7 +2,7 @@ import axios from "axios";
 
 const BASE_URL = "https://member.gmbbriefcase.com/api";
 
-const skipAuthRoutes = ["/v1/login", "/auth/refresh"];
+const skipAuthRoutes = ["/v1/login", "/v1/refresh-access-token"];
 
 // We'll inject the auth context functions later
 let getAccessToken: (() => string | null) | null = null;
@@ -12,7 +12,8 @@ let handleLogout: (() => void) | null = null;
 export const setAuthHelpers = (
   getToken: () => string | null,
   setToken: (token: string | null) => void,
-  logout: () => void
+  logout: () => void,
+  getRefreshToken: () => string
 ) => {
   getAccessToken = getToken;
   setAccessToken = setToken;
@@ -24,7 +25,7 @@ const axiosInstance = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: true, // This ensures cookies are sent with requests
+  // withCredentials: true, // This ensures cookies are sent with requests
 });
 
 // Request interceptor to add access token
@@ -34,6 +35,9 @@ axiosInstance.interceptors.request.use(
     const isAuthRoute = skipAuthRoutes.some((route) =>
       config.url?.includes(route)
     );
+
+    // console.log("🔍 Request to:", config.url);
+    // console.log("🛑 Is this a skipAuthRoute?", isAuthRoute);
 
     if (token && !isAuthRoute) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -61,12 +65,16 @@ axiosInstance.interceptors.response.use(
 
       try {
         // Use fetch instead of axios to avoid recursive interceptors
-        const response = await fetch(`${BASE_URL}/auth/refresh`, {
+        const response = await fetch(`${BASE_URL}/v1/refresh-access-token`, {
           method: "POST",
           // credentials: "include", // This sends the HttpOnly refresh token cookie
           headers: {
             "Content-Type": "application/json",
           },
+          body: JSON.stringify({
+            refresh_token: getAccessToken?.(),
+            userId: 348,
+          }),
         });
         // const response = await axios.post(`${BASE_URL}/auth/refresh`, {
         //   token: getAccessToken?.(),
@@ -76,6 +84,7 @@ axiosInstance.interceptors.response.use(
         }
 
         const data = await response.json();
+        // console.log("data in axios insatnce", data);
 
         // Update the access token in memory
         if (setAccessToken) {

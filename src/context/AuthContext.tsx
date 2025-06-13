@@ -22,11 +22,13 @@ interface User {
 interface AuthContextType {
   user: User | null;
   accessToken: string | null;
+  refreshToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (credentials: { username: string; password: string }) => Promise<void>;
   logout: () => void;
   setAccessToken: (token: string | null) => void;
+  setRefreshToken: (token: string | null) => void;
   setUser: (user: User | null) => void;
 }
 
@@ -34,7 +36,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  console.log("context while login", context);
+  // console.log("context while login", context);
   if (!context) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
@@ -48,12 +50,13 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [refreshToken, setRefreshToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const hasJustLoggedIn = useRef(false); // 🚨 This prevents refresh after login
   // Check if user is logged in on app start
   useEffect(() => {
     // Prevent calling refresh if just logged in
-    if (!hasJustLoggedIn.current) {
+    if (!hasJustLoggedIn.current && refreshToken && user?.id) {
       checkAuthStatus();
     } else {
       setIsLoading(false); // skip refresh, just set loading to false
@@ -64,13 +67,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       // Try to refresh token on app start to see if user is still authenticated
       const response = await fetch(
-        "https://member.gmbbriefcase.com/api/auth/refresh",
+        "https://member.gmbbriefcase.com/api/v1/refresh-access-token",
         {
           method: "POST",
           credentials: "include", // This sends the HttpOnly cookie
           headers: {
             "Content-Type": "application/json",
           },
+          body: JSON.stringify({
+            refresh_token: refreshToken,
+            userId: user.id,
+          }),
         }
       );
 
@@ -78,6 +85,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error("Refresh token invalid or expired");
       }
       const data = await response.json();
+      console.log("check auth token data", data);
       setAccessToken(data.accessToken);
       setUser(data.user);
     } catch (error) {
@@ -108,8 +116,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       const data = await response.json();
-      console.log("login response data", data);
+      // console.log("login response data", data);
       setAccessToken(data.data.jwtTokens.access_token);
+      setRefreshToken(data.data.jwtTokens.refresh_token);
       setUser(data.data.profile);
       hasJustLoggedIn.current = true;
     } catch (error) {
@@ -122,6 +131,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Clear local state regardless of API call success
     setAccessToken(null);
     setUser(null);
+    setRefreshToken(null);
     window.location.href = "/login";
   };
 
@@ -130,11 +140,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const value: AuthContextType = {
     user,
     accessToken,
+    refreshToken,
     isAuthenticated,
     isLoading,
     login,
     logout,
     setAccessToken,
+    setRefreshToken,
     setUser,
   };
 
