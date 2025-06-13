@@ -10,6 +10,11 @@ interface User {
   id: string;
   username: string;
   email?: string;
+  language: string;
+  planExpDate: string;
+  timeZone: string;
+  planName: string;
+  profilePic: string;
   // Add other user properties as needed
 }
 
@@ -28,7 +33,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  console.log("context while login", context);
+  if (!context) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
@@ -62,13 +68,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       );
 
-      if (response.ok) {
-        const data = await response.json();
-        setAccessToken(data.accessToken);
-        setUser(data.user);
+      if (!response.ok) {
+        throw new Error("Refresh token invalid or expired");
       }
+      const data = await response.json();
+      setAccessToken(data.accessToken);
+      setUser(data.user);
     } catch (error) {
-      console.log("No valid refresh token found");
+      console.warn("Auth refresh failed:", error);
+      setAccessToken(null);
+      setUser(null);
     } finally {
       setIsLoading(false);
     }
@@ -80,7 +89,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         "https://member.gmbbriefcase.com/api/v1/login",
         {
           method: "POST",
-          credentials: "include", // This allows setting HttpOnly cookies
+          // credentials: "include", // This allows setting HttpOnly cookies
           headers: {
             "Content-Type": "application/json",
           },
@@ -93,8 +102,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       const data = await response.json();
-      setAccessToken(data.accessToken);
-      setUser(data.user);
+      console.log("login response data", data);
+      setAccessToken(data.data.jwtTokens.access_token);
+      setUser(data.data.profile);
     } catch (error) {
       console.error("Login error:", error);
       throw error;
@@ -131,5 +141,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {!isLoading && children}
+    </AuthContext.Provider>
+  );
 };
