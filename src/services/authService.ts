@@ -29,10 +29,7 @@ export const refreshAccessToken = async () => {
 
 export const logoutUser = async () => {
   try {
-    await fetch("https://member.gmbbriefcase.com/api/auth/logout", {
-      method: "POST",
-      credentials: "include",
-    });
+    window.location.href = "/login";
   } catch (error) {
     console.error("Logout error:", error);
   }

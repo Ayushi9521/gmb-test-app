@@ -4,6 +4,7 @@ import React, {
   useState,
   useEffect,
   ReactNode,
+  useRef,
 } from "react";
 
 interface User {
@@ -48,10 +49,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
+  const hasJustLoggedIn = useRef(false); // 🚨 This prevents refresh after login
   // Check if user is logged in on app start
   useEffect(() => {
-    checkAuthStatus();
+    // Prevent calling refresh if just logged in
+    if (!hasJustLoggedIn.current) {
+      checkAuthStatus();
+    } else {
+      setIsLoading(false); // skip refresh, just set loading to false
+    }
   }, []);
 
   const checkAuthStatus = async () => {
@@ -105,6 +111,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log("login response data", data);
       setAccessToken(data.data.jwtTokens.access_token);
       setUser(data.data.profile);
+      hasJustLoggedIn.current = true;
     } catch (error) {
       console.error("Login error:", error);
       throw error;
@@ -112,20 +119,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = async () => {
-    try {
-      // Call logout endpoint to clear refresh token cookie
-      await fetch("https://member.gmbbriefcase.com/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-    } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
-      // Clear local state regardless of API call success
-      setAccessToken(null);
-      setUser(null);
-      window.location.href = "/login";
-    }
+    // Clear local state regardless of API call success
+    setAccessToken(null);
+    setUser(null);
+    window.location.href = "/login";
   };
 
   const isAuthenticated = !!accessToken && !!user;

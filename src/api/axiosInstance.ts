@@ -2,7 +2,7 @@ import axios from "axios";
 
 const BASE_URL = "https://member.gmbbriefcase.com/api";
 
-const skipAuthRoutes = ["/v1/login", "/auth/refresh", "/auth/logout"];
+const skipAuthRoutes = ["/v1/login", "/auth/refresh"];
 
 // We'll inject the auth context functions later
 let getAccessToken: (() => string | null) | null = null;
@@ -63,7 +63,7 @@ axiosInstance.interceptors.response.use(
         // Use fetch instead of axios to avoid recursive interceptors
         const response = await fetch(`${BASE_URL}/auth/refresh`, {
           method: "POST",
-          credentials: "include", // This sends the HttpOnly refresh token cookie
+          // credentials: "include", // This sends the HttpOnly refresh token cookie
           headers: {
             "Content-Type": "application/json",
           },
