@@ -57,6 +57,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     // Prevent calling refresh if just logged in
     if (!hasJustLoggedIn.current && refreshToken && user?.id) {
+      console.log("We are inside if state for chakauth");
       checkAuthStatus();
     } else {
       setIsLoading(false); // skip refresh, just set loading to false

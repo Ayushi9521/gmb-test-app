@@ -80,7 +80,7 @@ export const ListingGrid: React.FC<ListingGridProps> = ({
     setIsLoading(true);
     try {
       const res = await fetchListings({ page: pageNumber, limit: pageLimit });
-      console.log(res, "fetched list of card");
+      // console.log(res, "fetched list of card");
       const listingsObj = res?.data?.data?.listings || {};
       const apiListings = Object.values(listingsObj);
 

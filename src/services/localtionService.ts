@@ -18,10 +18,10 @@ const fetchInitialData = async (
   if (page === 1 && isInitial && !cachedInitialData) {
     const res = await axiosInstance.post("/v1/get-locations", { page, limit });
     cachedInitialData = res.data;
-    console.log("Fetched and cached initial location data", cachedInitialData);
+    // console.log("Fetched and cached initial location data", cachedInitialData);
     return cachedInitialData;
   } else if (page === 1 && isInitial && cachedInitialData) {
-    console.log("Using cached initial location data");
+    // console.log("Using cached initial location data");
     return cachedInitialData;
   } else {
     // Don't use cache for filtered requests or other pages

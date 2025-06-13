@@ -7,17 +7,22 @@ const skipAuthRoutes = ["/v1/login", "/v1/refresh-access-token"];
 // We'll inject the auth context functions later
 let getAccessToken: (() => string | null) | null = null;
 let setAccessToken: ((token: string | null) => void) | null = null;
+let getRefreshToken: (() => string | null) | null = null;
+let getUserId: (() => number | null) | null = null;
 let handleLogout: (() => void) | null = null;
 
 export const setAuthHelpers = (
   getToken: () => string | null,
   setToken: (token: string | null) => void,
   logout: () => void,
-  getRefreshToken: () => string
+  getRefresh: () => string | null,
+  getUser: () => number | null
 ) => {
   getAccessToken = getToken;
   setAccessToken = setToken;
   handleLogout = logout;
+  getRefreshToken = getRefresh;
+  getUserId = getUser;
 };
 
 const axiosInstance = axios.create({
@@ -35,9 +40,6 @@ axiosInstance.interceptors.request.use(
     const isAuthRoute = skipAuthRoutes.some((route) =>
       config.url?.includes(route)
     );
-
-    // console.log("🔍 Request to:", config.url);
-    // console.log("🛑 Is this a skipAuthRoute?", isAuthRoute);
 
     if (token && !isAuthRoute) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -64,6 +66,13 @@ axiosInstance.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
+        const refresh_token = getRefreshToken?.();
+        const userId = getUserId?.();
+
+        if (!refresh_token || !userId) {
+          throw new Error("Missing refresh token or user ID");
+        }
+
         // Use fetch instead of axios to avoid recursive interceptors
         const response = await fetch(`${BASE_URL}/v1/refresh-access-token`, {
           method: "POST",
@@ -72,19 +81,17 @@ axiosInstance.interceptors.response.use(
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            refresh_token: getAccessToken?.(),
-            userId: 348,
+            refresh_token,
+            userId,
           }),
         });
-        // const response = await axios.post(`${BASE_URL}/auth/refresh`, {
-        //   token: getAccessToken?.(),
-        // });
+
         if (!response) {
           throw new Error("Refresh failed");
         }
 
         const data = await response.json();
-        // console.log("data in axios insatnce", data);
+        console.log("data in axios insatnce", data);
 
         // Update the access token in memory
         if (setAccessToken) {
@@ -100,8 +107,10 @@ axiosInstance.interceptors.response.use(
         console.error("Token refresh failed:", refreshError);
         // Clear tokens and redirect to login
         if (handleLogout) {
-          handleLogout();
+           handleLogout();
+          console.log("inside the catch if logout");
         } else {
+          console.log("inside the catch else redirect login");
           window.location.href = "/login"; // Fallback redirect
         }
         return Promise.reject(refreshError);

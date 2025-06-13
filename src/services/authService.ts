@@ -19,7 +19,7 @@ export const refreshAccessToken = async () => {
     // if (!response.ok) {
     //   throw new Error("Refresh failed");
     // }
-
+    console.log("response from authservice", response);
     return await response.data;
   } catch (error) {
     console.error("Token refresh error:", error);

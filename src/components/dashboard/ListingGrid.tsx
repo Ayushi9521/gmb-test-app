@@ -124,9 +124,9 @@ export const ListingGrid: React.FC<ListingGridProps> = ({
         location: filters.location || undefined,
         isInitial,
       });
-      console.log("fetched list of card", res.data);
-      console.log("Fetched page:", pageNumber);
-      console.log("Previous page was:", previousPageNumber);
+      // console.log("fetched list of card", res.data);
+      // console.log("Fetched page:", pageNumber);
+      // console.log("Previous page was:", previousPageNumber);
 
       const listingsData = Array.isArray(res.data.data)
         ? res.data // in case it's just a list
@@ -139,12 +139,12 @@ export const ListingGrid: React.FC<ListingGridProps> = ({
         setMaxPageReached(1);
       } else if (pageNumber > previousPageNumber) {
         // Next button: append new listings
-        console.log("Next navigation: Appending listings");
+        // console.log("Next navigation: Appending listings");
         setListings((prev) => [...prev, ...listingsData]);
         setMaxPageReached(pageNumber);
       } else if (pageNumber < previousPageNumber) {
         // Previous button: remove last page worth of listings
-        console.log("Previous navigation: Removing last page");
+        // console.log("Previous navigation: Removing last page");
         setListings((prev) => {
           const itemsPerPage = pageLimit;
           const itemsToShow = pageNumber * itemsPerPage;
@@ -231,7 +231,7 @@ export const ListingGrid: React.FC<ListingGridProps> = ({
 
   // Memoized rendered listing cards
   const renderedItems = useMemo(() => {
-    console.log("listing data for cards", listings);
+    // console.log("listing data for cards", listings);
     return listings.map((listing) => (
       <ListingCard key={listing.id} listing={listing} activeKPI={activeKPI} />
     ));
